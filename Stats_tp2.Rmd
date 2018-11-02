@@ -1,0 +1,114 @@
+---
+title: "Stats_tp2"
+Author: Yann Castellvi
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+`%>%` <- magrittr::`%>%`
+```
+Exercice 1 
+
+```{r}
+iris_subset_1 <- iris[c(89:94, 108:112),]
+iris_subset_2 <- iris[88:114,]
+print(difference_in_means(iris_subset_1,"Sepal.Length","Species","versicolor","virginica"))
+
+p <-  permutation_twogroups(iris_subset_1,"Sepal.Length","Species","versicolor","virginica",difference_in_means)
+print(p)
+a <- data.frame(p,1)
+plot(a)
+```
+
+
+Exercice 2
+
+```{r}
+#TASK A
+
+print("DEBUT OF PRINT")
+stress_shift_3dict <- dplyr::filter(stressshift::stress_shift_unamb,Dict=="W1802" | Dict=="J1917" | Dict=="C1687")
+print(nrow(stress_shift_3dict))
+print("END OF PRINT")
+
+```
+
+```{r}
+#TASK B
+
+
+stress_shift_3dict_using_pipe <- 
+stressshift::stress_shift_unamb %>% dplyr::filter(Dict=="W1802" | Dict=="J1917" | Dict=="C1687")
+print(stress_shift_3dict_using_pipe %>% nrow)
+identical(stress_shift_3dict,stress_shift_3dict_using_pipe)
+print(stress_shift_3dict_using_pipe)
+
+
+```
+```{r}
+#TASK C
+stress_shift_3dict_nouns <- dplyr::filter(stress_shift_3dict, Category=="Noun")
+stress_shift_3dict_verbs <- dplyr::filter(stress_shift_3dict, Category=="Verb")
+stress_shift_3dict_using_bind <-  dplyr::bind_rows(stress_shift_3dict_nouns,stress_shift_3dict_verbs)
+stress_shift_3dict_using_bind_reversed <- dplyr::bind_rows(stress_shift_3dict_verbs,stress_shift_3dict_nouns)
+print(identical(stress_shift_3dict_using_bind_reversed,stress_shift_3dict))
+print(identical(stress_shift_3dict_using_bind,stress_shift_3dict))
+
+```
+La table non inversée est identique car elle contient tous les objets dans le même ordre exactement que la table stress_shift_3dict, alors que celle qui est inversée les contient dans l'ordre inverse. En effet, au final, on aura divisé la table en deux, puis réassemblé, ce qui revient à lui redonner son aspect initial.
+Non, pour un travail les deux tables peuvent être utilisées de la même façon car elle contiennet les mêmes objets au final. Pour une requête dans une base de données, l'ordre des données n'est pas important.
+
+```{r}
+#TASK D
+stress_shift_nouns_renamed <- dplyr::filter(stressshift::stress_shift_unamb, Category=="Noun")
+
+stress_shift_nouns_renamed <- dplyr::select(stress_shift_nouns_renamed, Word, Dict, Syllable)
+
+stress_shift_nouns_renamed <- dplyr::rename(stress_shift_nouns_renamed, Syllable_Noun = Syllable)
+
+stress_shift_verbs_renamed <- dplyr::filter(stressshift::stress_shift_unamb, Category=="Verb")
+
+stress_shift_verbs_renamed <- dplyr::select(stress_shift_verbs_renamed, Word, Dict, Syllable)
+
+stress_shift_verbs_renamed <- dplyr::rename(stress_shift_verbs_renamed, Syllable_Verb = Syllable)
+
+stress_shift_wide <- dplyr::inner_join(stress_shift_nouns_renamed,stress_shift_verbs_renamed)
+
+print(stress_shift_wide)
+
+
+
+```
+Cette nouvelle table a moins de lignes que les deux précédentes car elle ne contient que les mots ambigus, qui peuvent être à la fois des verbes et des noms. En effet, la jointure a donc garder les mots se trouvant dans les deux tables à la fois, c'est-à-dire, les mots pouvant être des verbes et des noms, c'est pour cela qu'il y a beaucoup moins de mots.
+
+```{r}
+#TASK E
+g <- ggplot2::ggplot(stressshift::stress_shift_unamb, ggplot2::aes(x=Category, fill=Syllable)) + ggplot2::geom_bar(colour="black")
+print(g)
+
+```
+```{r}
+#TASK F
+
+
+
+stress_shift_byword <-dplyr::group_by(stress_shift_wide,Word)
+stress_shift_byword <-dplyr::summarise(stress_shift_byword,Noun_Percent_Syll_1 = (sum(Syllable_Noun=="Syllable 1")/n())*100, Verb_Percent_Syll_1 = (sum(Syllable_Verb=="Syllable 1")/n())*100)
+print(stress_shift_byword)
+print(nrow(stress_shift_byword)==149)
+
+
+```
+
+```{r}
+#TASK G
+
+g <- ggplot2::ggplot(stress_shift_byword, ggplot2::aes(x=Noun_Percent_Syll_1,y = Verb_Percent_Syll_1))+
+    ggplot2::geom_point(shape=1)  
+print(g)
+```
+
